@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,7 +52,6 @@ export function Heading({ title, description, children }) {
 export function Empty({ title, description, children }) {
   return (
     <div className="empty">
-      <Mail size={28} strokeWidth={1.5} />
       <h2>{title}</h2>
       <p>{description}</p>
       {children}

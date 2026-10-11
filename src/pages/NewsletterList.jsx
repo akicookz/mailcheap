@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, ArrowUpRight, Mail } from "lucide-react";
+import { Plus, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useResource } from "@/hooks/use-resource";
@@ -43,10 +43,7 @@ export default function NewsletterList() {
               key={n.id}
               to={`/newsletters/${n.id}`}
             >
-              <div className="newsletter-icon">
-                <Mail size={23} />
-              </div>
-              <div>
+              <div className="newsletter-card-details">
                 <h2>{n.name}</h2>
                 <p>{n.description || n.from_email}</p>
                 <small>{number(n.active_count)} active subscribers</small>

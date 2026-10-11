@@ -1,6 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useMatch } from "react-router-dom";
 import {
-  Mail,
   LayoutDashboard,
   Send,
   Users,
@@ -13,11 +12,19 @@ import { api } from "@/lib/api";
 import { useResource } from "@/hooks/use-resource";
 export default function Layout({ onLogout }) {
   const status = useResource("admin/status");
+  const isEditor = useMatch("/campaigns/:id");
+  if (isEditor) {
+    return (
+      <main className="editor-workspace">
+        <Outlet context={{ status: status.data }} />
+      </main>
+    );
+  }
   return (
     <div className="shell">
       <aside className="sidebar">
         <NavLink to="/" className="logo">
-          <Mail size={22} /> Mailcheap
+          Mailcheap
         </NavLink>
         <nav aria-label="Main navigation">
           {[

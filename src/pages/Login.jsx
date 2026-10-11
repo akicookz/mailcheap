@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Mail } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button, Input, Field } from "@/components/app-ui";
 export default function Login({ onLogin }) {
@@ -10,9 +9,7 @@ export default function Login({ onLogin }) {
   return (
     <main className="login-page">
       <div className="login-panel">
-        <div className="logo">
-          <Mail size={24} /> Mailcheap
-        </div>
+        <div className="logo">Mailcheap</div>
         <h1>
           A little closer
           <br />
