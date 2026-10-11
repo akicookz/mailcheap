@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { cloneElement, useId, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,19 @@ import {
 } from "@/components/ui/dialog";
 export { Button, Input, Textarea };
 export function Field({ label, hint, children }) {
+  const generatedId = useId();
+  const id = children.props.id || generatedId;
   return (
-    <label className="field">
-      <span>{label}</span>
-      {children}
-      {hint && <small>{hint}</small>}
-    </label>
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      {cloneElement(children, {
+        id,
+        "aria-describedby": hint
+          ? `${id}-hint`
+          : children.props["aria-describedby"],
+      })}
+      {hint && <small id={`${id}-hint`}>{hint}</small>}
+    </div>
   );
 }
 export function Select({ children, ...props }) {
@@ -27,14 +34,15 @@ export function Select({ children, ...props }) {
     </select>
   );
 }
-export function Badge({ status }) {
+export function Badge({ status, children }) {
   return (
     <span className={`badge ${status}`}>
-      {status === "accepted"
-        ? "Accepted by provider"
-        : status === "uncertain"
-          ? "Needs review"
-          : status}
+      {children ||
+        (status === "accepted"
+          ? "Accepted by provider"
+          : status === "uncertain"
+            ? "Needs review"
+            : status?.replace(/^./, (letter) => letter.toUpperCase()))}
     </span>
   );
 }
@@ -45,7 +53,7 @@ export function Heading({ title, description, children }) {
         <h1>{title}</h1>
         {description && <p>{description}</p>}
       </div>
-      <div className="actions">{children}</div>
+      {children && <div className="actions">{children}</div>}
     </div>
   );
 }

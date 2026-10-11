@@ -1,15 +1,15 @@
-/* ReplyMaven's dark palette and glass surfaces, without decorative borders. */
+/* Dark glass surfaces with Cloudflare orange accents. */
 :root {
   color-scheme: dark;
   --background: #08080a;
   --foreground: #f0f0f5;
   --card: #16171c;
   --popover: #1e1f26;
-  --brand: #2563eb;
-  --brand-hover: #3b82f6;
-  --brand-soft: #60a5fa;
+  --brand: #f48120;
+  --brand-hover: #ff963e;
+  --brand-soft: #ffa457;
   --primary: var(--brand);
-  --primary-foreground: #fff;
+  --primary-foreground: #211307;
   --secondary: #18181e;
   --secondary-foreground: #c8c8d2;
   --muted: #1c1c22;
@@ -20,7 +20,7 @@
   --success-surface: rgb(48 209 88 / 10%);
   --warning-surface: rgb(255 159 10 / 12%);
   --danger-surface: rgb(255 99 99 / 12%);
-  --brand-surface: rgb(37 99 235 / 16%);
+  --brand-surface: rgb(244 129 32 / 16%);
   --wallpaper-base: #0b0c0f;
   --glass-sidebar: rgb(28 28 32 / 52%);
   --glass-list: rgb(24 24 27 / 78%);

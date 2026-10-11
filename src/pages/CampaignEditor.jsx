@@ -5,7 +5,7 @@ import {
   useOutletContext,
   useParams,
 } from "react-router-dom";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { Placeholder } from "@tiptap/extensions";
@@ -17,6 +17,7 @@ import {
   Monitor,
   Smartphone,
   Check,
+  Circle,
   Bold,
   Italic,
   Heading2,
@@ -78,6 +79,22 @@ function RichEditor({ content, onChange }) {
     },
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
   });
+  const toolbarState = useEditorState({
+    editor,
+    selector: ({ editor }) =>
+      editor
+        ? {
+            Bold: editor.isActive("bold"),
+            Italic: editor.isActive("italic"),
+            Heading: editor.isActive("heading"),
+            "Bullet list": editor.isActive("bulletList"),
+            "Numbered list": editor.isActive("orderedList"),
+            "Add link": editor.isActive("link"),
+            canUndo: editor.can().undo(),
+            canRedo: editor.can().redo(),
+          }
+        : null,
+  });
   if (!editor) return <Loading />;
   const tools = [
     ["Bold", Bold, () => editor.chain().focus().toggleBold().run()],
@@ -109,22 +126,31 @@ function RichEditor({ content, onChange }) {
     ["Undo", Undo, () => editor.chain().focus().undo().run()],
     ["Redo", Redo, () => editor.chain().focus().redo().run()],
   ];
+  const renderTool = ([label, Icon, action]) => (
+    <Button
+      key={label}
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={label}
+      title={label}
+      aria-pressed={toolbarState?.[label]}
+      disabled={
+        (label === "Undo" && !toolbarState?.canUndo) ||
+        (label === "Redo" && !toolbarState?.canRedo)
+      }
+      onClick={action}
+    >
+      <Icon size={17} />
+    </Button>
+  );
   return (
     <>
       <div className="editor-toolbar">
-        {tools.map(([label, Icon, action]) => (
-          <Button
-            key={label}
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={label}
-            title={label}
-            onClick={action}
-          >
-            <Icon size={17} />
-          </Button>
-        ))}
+        {tools.slice(0, -2).map(renderTool)}
+        <div className="editor-toolbar-history">
+          {tools.slice(-2).map(renderTool)}
+        </div>
         <input
           ref={imageInput}
           hidden
@@ -611,8 +637,9 @@ function DraftEditor({ initial, refresh }) {
         <ul className="send-checks">
           {checks.map(([label, ok]) => (
             <li key={label} className={ok ? "ok" : ""}>
-              <Check size={15} />
+              {ok ? <Check size={15} /> : <Circle size={15} />}
               {label}
+              <span className="sr-only">: {ok ? "Ready" : "Not ready"}</span>
             </li>
           ))}
         </ul>

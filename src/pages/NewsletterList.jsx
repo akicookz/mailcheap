@@ -26,7 +26,10 @@ export default function NewsletterList() {
   const navigate = useNavigate();
   return (
     <>
-      <Heading title="Newsletters" description="A home for every conversation.">
+      <Heading
+        title="Newsletters"
+        description="Manage your audiences, sender details, and archives."
+      >
         <Button onClick={() => setOpen(true)}>
           <Plus size={16} /> New newsletter
         </Button>
@@ -55,7 +58,7 @@ export default function NewsletterList() {
       ) : (
         <div className="panel">
           <Empty
-            title="Make room for your readers"
+            title="Create your first newsletter"
             description="Create your first newsletter. Each one has its own subscribers, sender, and public archive."
           >
             <Button onClick={() => setOpen(true)}>
@@ -69,7 +72,7 @@ export default function NewsletterList() {
         onOpenChange={setOpen}
         wide
         title="Create a newsletter"
-        description="The basics your readers will see."
+        description="Set up your newsletter and the sender your readers will see."
       >
         <form
           onSubmit={async (e) => {
@@ -90,7 +93,7 @@ export default function NewsletterList() {
         >
           <NewsletterFields values={values} setValues={setValues} />
           <Button disabled={busy} type="submit">
-            Create newsletter
+            {busy ? "Creating…" : "Create newsletter"}
           </Button>
         </form>
       </Modal>

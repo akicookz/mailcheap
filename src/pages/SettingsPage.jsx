@@ -11,6 +11,7 @@ import {
   Field,
   Heading,
   ErrorState,
+  Loading,
   Modal,
   Badge,
   AsyncButton,
@@ -22,7 +23,8 @@ export default function SettingsPage() {
   const keys = useResource("admin/keys");
   const [open, setOpen] = useState(false),
     [name, setName] = useState(""),
-    [token, setToken] = useState("");
+    [token, setToken] = useState(""),
+    [busy, setBusy] = useState(false);
   return (
     <>
       <Heading
@@ -34,7 +36,13 @@ export default function SettingsPage() {
           <section className="panel">
             <div className="section-heading">
               <h2>Email sending</h2>
-              <Badge status={status?.sending_enabled ? "active" : "paused"} />
+              <Badge status={status?.sending_enabled ? "active" : "paused"}>
+                {!status
+                  ? "Loading…"
+                  : status.sending_enabled
+                    ? "Enabled"
+                    : "Sending off"}
+              </Badge>
             </div>
             <p>
               Cloudflare Email handles delivery. Campaigns are paced at{" "}
@@ -90,7 +98,9 @@ export default function SettingsPage() {
               Use a key to collect subscribers or create drafts from another
               app.
             </p>
-            {keys.error ? (
+            {keys.loading ? (
+              <Loading />
+            ) : keys.error ? (
               <ErrorState error={keys.error} />
             ) : keys.data?.length ? (
               <div>
@@ -175,6 +185,7 @@ export default function SettingsPage() {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
+              setBusy(true);
               try {
                 const result = await api("admin/keys", {
                   method: "POST",
@@ -185,6 +196,8 @@ export default function SettingsPage() {
                 await keys.refresh();
               } catch (e) {
                 toast.error(e.message);
+              } finally {
+                setBusy(false);
               }
             }}
           >
@@ -197,7 +210,9 @@ export default function SettingsPage() {
                 placeholder="My website"
               />
             </Field>
-            <Button type="submit">Create key</Button>
+            <Button type="submit" disabled={busy}>
+              {busy ? "Creating…" : "Create key"}
+            </Button>
           </form>
         )}
       </Modal>

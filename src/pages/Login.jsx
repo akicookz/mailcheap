@@ -10,12 +10,8 @@ export default function Login({ onLogin }) {
     <main className="login-page">
       <div className="login-panel">
         <div className="logo">Mailcheap</div>
-        <h1>
-          A little closer
-          <br />
-          to your readers.
-        </h1>
-        <p>Sign in to write your next issue.</p>
+        <h1>Welcome back</h1>
+        <p>Sign in to manage your newsletters.</p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -58,7 +54,7 @@ export default function Login({ onLogin }) {
             {busy ? "Signing in…" : "Sign in"}
           </Button>
         </form>
-        <small>Your newsletter, your list.</small>
+        <small>Use your administrator email and password.</small>
       </div>
     </main>
   );

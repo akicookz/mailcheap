@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -21,7 +21,8 @@ import CampaignTable from "@/components/CampaignTable";
 export default function CampaignList() {
   const resource = useResource("admin/campaigns"),
     lists = useResource("admin/newsletters");
-  const [open, setOpen] = useState(false),
+  const [params, setParams] = useSearchParams();
+  const [open, setOpen] = useState(params.get("new") === "1"),
     [list, setList] = useState(""),
     [subject, setSubject] = useState(""),
     [busy, setBusy] = useState(false);
@@ -30,7 +31,7 @@ export default function CampaignList() {
     <>
       <Heading
         title="Campaigns"
-        description="From the first draft to the last inbox."
+        description="Create, schedule, and track your newsletter issues."
       >
         <Button onClick={() => setOpen(true)}>
           <Plus size={16} /> New campaign
@@ -42,13 +43,17 @@ export default function CampaignList() {
         <ErrorState error={resource.error} retry={resource.refresh} />
       ) : (
         <CampaignTable
+          onCreate={() => setOpen(true)}
           rows={resource.data.filter((x) => x.status !== "canceled")}
         />
       )}
       <Modal
         open={open}
-        onOpenChange={setOpen}
-        title="Start a new issue"
+        onOpenChange={(value) => {
+          setOpen(value);
+          if (!value) setParams({}, { replace: true });
+        }}
+        title="New campaign"
         description="Choose a newsletter and give your draft a subject."
       >
         {lists.data?.length ? (
@@ -86,11 +91,11 @@ export default function CampaignList() {
                 autoFocus
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="What’s on your mind?"
+                placeholder="Your next newsletter issue"
               />
             </Field>
             <Button type="submit" disabled={busy}>
-              Create draft <ArrowRight size={16} />
+              {busy ? "Creating…" : "Create draft"} <ArrowRight size={16} />
             </Button>
           </form>
         ) : (
@@ -98,9 +103,9 @@ export default function CampaignList() {
             title="Create a newsletter first"
             description="Give your newsletter a name and a sender address."
           >
-            <Link to="/newsletters">
-              <Button>Create newsletter</Button>
-            </Link>
+            <Button asChild>
+              <Link to="/newsletters">Create newsletter</Link>
+            </Button>
           </Empty>
         )}
       </Modal>

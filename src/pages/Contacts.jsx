@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Plus, Upload, Search } from "lucide-react";
 import Papa from "papaparse";
@@ -69,19 +70,22 @@ export default function Contacts() {
     <>
       <Heading
         title="Contacts"
-        description="People who chose to hear from you."
+        description="Manage subscribers and their subscription status."
       >
         <Button
           variant="secondary"
+          disabled={!lists.data?.length}
           onClick={() => {
             setImportOpen(true);
             setConsent(false);
             setImportResult(null);
+            setRows([]);
           }}
         >
           <Upload size={16} /> Import CSV
         </Button>
         <Button
+          disabled={!lists.data?.length}
           onClick={() => {
             setOpen(true);
             setConsent(false);
@@ -90,6 +94,12 @@ export default function Contacts() {
           <Plus size={16} /> Add contact
         </Button>
       </Heading>
+      {lists.data && !lists.data.length && (
+        <div className="notice">
+          Create a newsletter before adding subscribers.{" "}
+          <Link to="/newsletters">Go to newsletters →</Link>
+        </div>
+      )}
       <div className="filters">
         <label className="search">
           <Search size={17} />
@@ -135,7 +145,9 @@ export default function Contacts() {
             "bounced",
             "complained",
           ].map((s) => (
-            <option key={s}>{s}</option>
+            <option key={s} value={s}>
+              {s[0].toUpperCase() + s.slice(1)}
+            </option>
           ))}
         </Select>
       </div>
@@ -226,8 +238,30 @@ export default function Contacts() {
                 ? "No matching contacts"
                 : "Your readers will appear here"
             }
-            description="Share your subscription page or import a list of people who already subscribed."
-          />
+            description={
+              search || filter || status
+                ? "Try a different email or clear your filters."
+                : "Share your subscription page or import people who already subscribed."
+            }
+          >
+            {search || filter || status ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSearch("");
+                  setFilter("");
+                  setStatus("");
+                  setOffset(0);
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : (
+              <Button asChild variant="secondary">
+                <Link to="/newsletters">View newsletters</Link>
+              </Button>
+            )}
+          </Empty>
         </div>
       )}
       <Modal
@@ -275,7 +309,7 @@ export default function Contacts() {
           </Field>
           {consentField}
           <Button type="submit" disabled={!consent || busy || !currentList}>
-            Add contact
+            {busy ? "Adding…" : "Add contact"}
           </Button>
         </form>
       </Modal>
@@ -292,6 +326,8 @@ export default function Contacts() {
             accept=".csv,text/csv"
             onChange={(e) => {
               const file = e.target.files[0];
+              setRows([]);
+              setImportResult(null);
               if (!file) return;
               if (file.size > 10 * 1024 * 1024) {
                 toast.error("Choose a CSV smaller than 10 MB");

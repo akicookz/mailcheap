@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { ArrowUpRight, Copy } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { ArrowUpRight, ArrowLeft, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useResource } from "@/hooks/use-resource";
@@ -34,19 +34,26 @@ export default function NewsletterSettings() {
   if (!values) return <ErrorState error="Newsletter not found" />;
   return (
     <>
+      <Link className="page-back" to="/newsletters">
+        <ArrowLeft size={14} /> Newsletters
+      </Link>
       <Heading
         title={values.name}
         description="Sender details, subscriptions, and your public archive."
       >
-        <a target="_blank" rel="noreferrer" href={`/public/${values.slug}`}>
-          <Button variant="secondary">
+        <Button variant="secondary" asChild>
+          <a target="_blank" rel="noreferrer" href={`/public/${values.slug}`}>
             View archive <ArrowUpRight size={16} />
-          </Button>
-        </a>
+          </a>
+        </Button>
+        <Button type="submit" form="newsletter-settings" disabled={busy}>
+          {busy ? "Saving…" : "Save changes"}
+        </Button>
       </Heading>
       <div className="settings-layout">
         <form
-          className="panel"
+          id="newsletter-settings"
+          className="settings-form"
           onSubmit={async (e) => {
             e.preventDefault();
             setBusy(true);
@@ -64,47 +71,57 @@ export default function NewsletterSettings() {
             }
           }}
         >
-          <h2>Newsletter details</h2>
-          <NewsletterFields full values={values} setValues={setValues} />
-          <h2 className="form-section">Welcome email</h2>
-          <p>
-            Sent once after a subscriber joins or confirms. Leave the subject
-            empty to turn it off.
-          </p>
-          <Field label="Welcome subject">
-            <Input
-              value={values.welcome_subject}
-              onChange={(e) =>
-                setValues({ ...values, welcome_subject: e.target.value })
-              }
-            />
-          </Field>
-          <Field label="Welcome message" hint="Markdown is supported.">
-            <Textarea
-              rows={6}
-              value={values.welcome_body}
-              onChange={(e) =>
-                setValues({ ...values, welcome_body: e.target.value })
-              }
-            />
-          </Field>
-          <Field
-            label="Exclude inactive subscribers after this many days"
-            hint="0 keeps all active subscribers. Use at least 30 days to enable this filter."
-          >
-            <Input
-              type="number"
-              min="0"
-              max="3650"
-              value={values.cleanup_days}
-              onChange={(e) =>
-                setValues({ ...values, cleanup_days: Number(e.target.value) })
-              }
-            />
-          </Field>
-          <Button type="submit" disabled={busy}>
-            {busy ? "Saving…" : "Save newsletter"}
-          </Button>
+          <section className="panel form-panel">
+            <h2>Newsletter details</h2>
+            <NewsletterFields full values={values} setValues={setValues} />
+          </section>
+          <section className="panel form-panel">
+            <h2>Welcome email</h2>
+            <p>
+              Sent once after a subscriber joins or confirms. Leave the subject
+              empty to turn it off.
+            </p>
+            <Field label="Welcome subject">
+              <Input
+                value={values.welcome_subject}
+                onChange={(e) =>
+                  setValues({ ...values, welcome_subject: e.target.value })
+                }
+              />
+            </Field>
+            <Field label="Welcome message" hint="Markdown is supported.">
+              <Textarea
+                rows={6}
+                value={values.welcome_body}
+                onChange={(e) =>
+                  setValues({ ...values, welcome_body: e.target.value })
+                }
+              />
+            </Field>
+          </section>
+          <section className="panel form-panel">
+            <h2>Audience preferences</h2>
+            <p>Skip readers who haven’t engaged recently.</p>
+            <Field
+              label="Days without activity"
+              hint="0 keeps all active subscribers. Use at least 30 days to enable this filter."
+            >
+              <Input
+                type="number"
+                min="0"
+                max="3650"
+                value={values.cleanup_days}
+                onChange={(e) =>
+                  setValues({ ...values, cleanup_days: Number(e.target.value) })
+                }
+              />
+            </Field>
+          </section>
+          <div className="form-savebar">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Save newsletter"}
+            </Button>
+          </div>
         </form>
         <aside>
           <div className="panel">

@@ -18,12 +18,15 @@ export default function Overview() {
   if (error) return <ErrorState error={error} retry={refresh} />;
   return (
     <>
-      <Heading title="Overview" description="A clear view of your newsletter.">
-        <Link to="/campaigns">
-          <Button>
-            <Plus size={16} /> Write an issue
-          </Button>
-        </Link>
+      <Heading
+        title="Overview"
+        description="Subscribers, campaigns, and recent activity."
+      >
+        <Button asChild>
+          <Link to="/campaigns?new=1">
+            <Plus size={16} /> New campaign
+          </Link>
+        </Button>
       </Heading>
       <Stats
         items={[
@@ -70,7 +73,7 @@ export default function Overview() {
           )}
         </div>
         <div className="panel">
-          <h2>On your desk</h2>
+          <h2>Campaign status</h2>
           <div className="summary-row">
             <span>Drafts in progress</span>
             <strong>{number(data.campaigns.drafts)}</strong>
