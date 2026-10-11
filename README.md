@@ -58,7 +58,7 @@ Cloudflare account access, quotas, and acceptance of newsletter traffic still ne
 
 The restructured app passes lint, Worker type checking, the frontend and Worker production build, and Wrangler deployment dry run. The local health endpoint responds; unauthenticated admin requests and cross-origin login writes are rejected. The login page has been checked through browser clicks at desktop and mobile sizes.
 
-The schema has **not** been applied. Authenticated dashboard flows, D1 queries, queue consumption, provider events, and real delivery have **not** been verified at runtime. No remote app deployment or campaign send has been performed. No tests were written, per workspace instructions.
+The initial schema was applied to **local D1 only** on 2026-10-11 with user approval. Browser sign-in and the authenticated Overview page work against that database. Other dashboard flows, queue consumption, provider events, and real delivery have **not** been verified at runtime. No remote schema has been applied. No remote app deployment or campaign send has been performed. No tests were written, per workspace instructions.
 
 ## API
 
