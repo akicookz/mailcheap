@@ -41,7 +41,6 @@ import {
   Textarea,
   Field,
   Select,
-  Heading,
   Loading,
   ErrorState,
   Modal,
@@ -230,6 +229,7 @@ function DraftEditor({ initial, refresh }) {
     body: campaign.body,
     archive_enabled: !!campaign.archive_enabled,
   });
+  const [view, setView] = useState("write");
   const [device, setDevice] = useState("desktop"),
     [dialog, setDialog] = useState(null),
     [schedule, setSchedule] = useState(""),
@@ -323,76 +323,117 @@ function DraftEditor({ initial, refresh }) {
     ["Sending enabled", !!status?.sending_enabled],
   ];
   return (
-    <>
-      <Link
-        className="back-link"
-        to="/campaigns"
-        onClick={async (e) => {
-          if (autosave.isDirty) {
-            e.preventDefault();
-            if (await autosave.flush()) navigate("/campaigns");
-          }
-        }}
-      >
-        <ArrowLeft size={16} /> All campaigns
-      </Link>
-      <Heading
-        title={campaign.subject || "Untitled issue"}
-        description={newsletter.name}
-      >
-        <Badge status={campaign.status} />
-        <AsyncButton variant="secondary" onClick={() => action("duplicate")}>
-          <Copy size={15} /> Duplicate
-        </AsyncButton>
-        {editable ? (
-          <>
-            <AsyncButton
-              variant="secondary"
-              onClick={async () => {
-                if (await autosave.flush()) toast.success("Draft saved");
-              }}
-            >
-              <Save size={15} /> Save
-            </AsyncButton>
-            <Button onClick={() => setDialog("send")}>
-              <Send size={15} /> Review & send
-            </Button>
-          </>
-        ) : campaign.status === "sending" ? (
-          <AsyncButton onClick={() => action("pause")}>
-            <Pause size={15} /> Pause
-          </AsyncButton>
-        ) : campaign.status === "paused" ? (
-          <AsyncButton onClick={() => action("resume")}>
-            <Play size={15} /> Resume
-          </AsyncButton>
-        ) : campaign.status === "scheduled" ? (
-          <AsyncButton onClick={() => action("unschedule")}>
-            Move to draft
-          </AsyncButton>
-        ) : null}
-      </Heading>
-      {campaign.pause_reason && (
-        <div className="notice">{campaign.pause_reason}</div>
-      )}
-      {campaign.scheduled_at && campaign.status === "scheduled" && (
-        <div className="notice">
-          Scheduled for {new Date(campaign.scheduled_at).toLocaleString()}
+    <div className="campaign-editor">
+      <header className="editor-header">
+        <div className="editor-heading">
+          <Link
+            className="editor-back"
+            aria-label="All campaigns"
+            title="All campaigns"
+            to="/campaigns"
+            onClick={async (e) => {
+              if (autosave.isDirty) {
+                e.preventDefault();
+                if (await autosave.flush()) navigate("/campaigns");
+              }
+            }}
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <div className="editor-title">
+            <h1>{values.subject || "Untitled issue"}</h1>
+            <span>{newsletter.name}</span>
+          </div>
+          <Badge status={campaign.status} />
         </div>
-      )}
-      {!editable && (
-        <Stats
-          items={[
-            ["Recipients", stats.recipients],
-            ["Sent", stats.sent],
-            ["Delivered", stats.delivered],
-            ["Clicked", stats.clicked],
-          ]}
-        />
-      )}
-      <div className="editor-grid">
-        <section className="writing-panel">
+        <div className="editor-actions">
+          <AsyncButton variant="secondary" onClick={() => action("duplicate")}>
+            <Copy size={15} /> Duplicate
+          </AsyncButton>
+          {editable ? (
+            <>
+              <AsyncButton
+                variant="secondary"
+                onClick={async () => {
+                  if (await autosave.flush()) toast.success("Draft saved");
+                }}
+              >
+                <Save size={15} /> Save
+              </AsyncButton>
+              <Button onClick={() => setDialog("send")}>
+                <Send size={15} /> Review & send
+              </Button>
+            </>
+          ) : campaign.status === "sending" ? (
+            <AsyncButton onClick={() => action("pause")}>
+              <Pause size={15} /> Pause
+            </AsyncButton>
+          ) : campaign.status === "paused" ? (
+            <AsyncButton onClick={() => action("resume")}>
+              <Play size={15} /> Resume
+            </AsyncButton>
+          ) : campaign.status === "scheduled" ? (
+            <AsyncButton onClick={() => action("unschedule")}>
+              Move to draft
+            </AsyncButton>
+          ) : null}
+        </div>
+      </header>
+      <nav className="editor-view-switch" aria-label="Editor view">
+        <Button
+          variant="ghost"
+          aria-pressed={view === "write"}
+          onClick={() => setView("write")}
+        >
+          Write
+        </Button>
+        <Button
+          variant="ghost"
+          aria-pressed={view === "preview"}
+          onClick={() => setView("preview")}
+        >
+          Preview
+        </Button>
+      </nav>
+      <div className="editor-content">
+        {campaign.pause_reason && (
+          <div className="notice">{campaign.pause_reason}</div>
+        )}
+        {campaign.scheduled_at && campaign.status === "scheduled" && (
+          <div className="notice">
+            Scheduled for {new Date(campaign.scheduled_at).toLocaleString()}
+          </div>
+        )}
+        {!editable && (
+          <Stats
+            items={[
+              ["Recipients", stats.recipients],
+              ["Sent", stats.sent],
+              ["Delivered", stats.delivered],
+              ["Clicked", stats.clicked],
+            ]}
+          />
+        )}
+        <section
+          className="writing-panel editor-document"
+          aria-label="Write email"
+          hidden={view !== "write"}
+        >
           <div className="writing-meta">
+            <div className="editor-address-row">
+              <span>From</span>
+              <div>
+                {newsletter.from_name || newsletter.name}{" "}
+                <span>{newsletter.from_email}</span>
+              </div>
+            </div>
+            <div className="editor-address-row">
+              <span>To</span>
+              <div>
+                {newsletter.name}{" "}
+                <span>{number(audience)} active subscribers</span>
+              </div>
+            </div>
             <Field label="Subject">
               <Input
                 disabled={!editable}
@@ -473,7 +514,11 @@ function DraftEditor({ initial, refresh }) {
             <small>{Math.ceil(rendered.bytes / 1000)} KB</small>
           </div>
         </section>
-        <section className="preview-panel">
+        <section
+          className="preview-panel editor-document"
+          aria-label="Preview email"
+          hidden={view !== "preview"}
+        >
           <div className="preview-toolbar">
             <span>Email preview</span>
             <div>
@@ -497,66 +542,66 @@ function DraftEditor({ initial, refresh }) {
               </Button>
             </div>
           </div>
-          <div className="preview-envelope">
-            <strong>{newsletter.from_name || newsletter.name}</strong>
-            <small>{newsletter.from_email}</small>
-            <p>{values.subject || "No subject"}</p>
-            <small>{values.preview_text}</small>
-          </div>
-          <div className="preview-canvas">
-            <iframe
-              title="Email preview"
-              sandbox=""
-              srcDoc={rendered.html}
-              style={{ width: device === "mobile" ? 375 : "100%" }}
-            />
+          <div
+            className="preview-message"
+            style={{ width: device === "mobile" ? 375 : "100%" }}
+          >
+            <div className="preview-envelope">
+              <strong>{newsletter.from_name || newsletter.name}</strong>
+              <small>{newsletter.from_email}</small>
+              <p>{values.subject || "No subject"}</p>
+              <small>{values.preview_text}</small>
+            </div>
+            <div className="preview-canvas">
+              <iframe title="Email preview" sandbox="" srcDoc={rendered.html} />
+            </div>
           </div>
         </section>
-      </div>
-      {(!editable || deliveries.length > 0) && (
-        <section className="delivery-section">
-          <div className="section-heading">
-            <h2>Delivery activity</h2>
-            <Button variant="secondary" onClick={refresh}>
-              Refresh
-            </Button>
-          </div>
-          <p>
-            “Accepted” means Cloudflare accepted the message. Delivery is
-            confirmed by a provider event.
-          </p>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Recipient</th>
-                  <th>Status</th>
-                  <th>Sent</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deliveries.map((d) => (
-                  <tr key={d.id}>
-                    <td>
-                      {d.email}
-                      <small>{d.kind}</small>
-                    </td>
-                    <td>
-                      <Badge status={d.status} />
-                    </td>
-                    <td>{date(d.sent_at)}</td>
-                    <td className="delivery-error">{d.error || "—"}</td>
+        {(!editable || deliveries.length > 0) && (
+          <section className="delivery-section">
+            <div className="section-heading">
+              <h2>Delivery activity</h2>
+              <Button variant="secondary" onClick={refresh}>
+                Refresh
+              </Button>
+            </div>
+            <p>
+              “Accepted” means Cloudflare accepted the message. Delivery is
+              confirmed by a provider event.
+            </p>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Recipient</th>
+                    <th>Status</th>
+                    <th>Sent</th>
+                    <th>Details</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {!deliveries.length && (
-              <p className="subtle-empty">No deliveries yet.</p>
-            )}
-          </div>
-        </section>
-      )}
+                </thead>
+                <tbody>
+                  {deliveries.map((d) => (
+                    <tr key={d.id}>
+                      <td>
+                        {d.email}
+                        <small>{d.kind}</small>
+                      </td>
+                      <td>
+                        <Badge status={d.status} />
+                      </td>
+                      <td>{date(d.sent_at)}</td>
+                      <td className="delivery-error">{d.error || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!deliveries.length && (
+                <p className="subtle-empty">No deliveries yet.</p>
+              )}
+            </div>
+          </section>
+        )}
+      </div>
       <Modal
         open={dialog === "send"}
         onOpenChange={(open) => !open && setDialog(null)}
@@ -649,6 +694,6 @@ function DraftEditor({ initial, refresh }) {
           Change format and clear message
         </Button>
       </Modal>
-    </>
+    </div>
   );
 }

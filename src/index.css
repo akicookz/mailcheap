@@ -101,9 +101,6 @@ select:focus-visible {
   letter-spacing: -0.7px;
   color: var(--ink-1);
 }
-.logo > svg {
-  color: var(--brand-soft);
-}
 .sidebar nav {
   display: flex;
   flex-direction: column;
@@ -238,9 +235,6 @@ select:focus-visible {
   text-align: center;
   gap: 14px;
   padding: 36px 16px;
-}
-.empty > svg {
-  color: var(--ink-6);
 }
 .empty h2 {
   font-size: 20px;
@@ -517,20 +511,11 @@ td small {
   padding: 24px;
   border-radius: var(--radius-panel);
 }
-.newsletter-card > div:nth-child(2) {
+.newsletter-card-details {
   flex: 1;
 }
 .newsletter-card p {
   margin: 6px 0 12px;
-}
-.newsletter-icon {
-  width: 52px;
-  height: 52px;
-  background: var(--glass-raised);
-  color: var(--brand-soft);
-  border-radius: var(--radius-panel);
-  display: grid;
-  place-items: center;
 }
 .settings-layout {
   display: grid;
@@ -658,37 +643,127 @@ pre {
 .login-panel .field input {
   background: var(--glass-button);
 }
-.back-link {
-  display: inline-flex;
-  gap: 7px;
-  align-items: center;
-  font-size: 12px;
-  color: var(--ink-5);
-  margin-bottom: 24px;
+/* The editor owns the whole viewport; dashboard navigation stays on list pages. */
+.editor-workspace {
+  min-height: 100dvh;
+  width: 100%;
+  background: var(--background);
 }
-.editor-grid {
+.editor-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 76px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--glass-reading);
+  backdrop-filter: blur(32px);
+}
+.editor-heading,
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.editor-actions {
+  gap: 8px;
+  flex-shrink: 0;
+}
+.editor-back {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
-  align-items: start;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: var(--ink-5);
+  border-radius: var(--radius-control);
+}
+.editor-back:hover {
+  background: var(--glass-button);
+  color: var(--ink-1);
+}
+.editor-title {
+  min-width: 0;
+}
+.editor-title h1 {
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.editor-title > span {
+  color: var(--ink-6);
+  font-size: 12px;
+}
+.editor-view-switch {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 24px;
+}
+.editor-view-switch [aria-pressed="true"] {
+  background: var(--glass-raised);
+  color: var(--ink-1);
+}
+.editor-content {
+  width: min(100%, 840px);
+  margin: 0 auto;
+  padding: 28px 32px 32px;
+}
+.editor-document[hidden] {
+  display: none;
 }
 .writing-panel {
-  background: var(--glass-list);
-  border-radius: var(--radius-panel);
-  overflow: hidden;
+  min-height: calc(100dvh - 196px);
+  display: flex;
+  flex-direction: column;
 }
-.writing-meta {
-  padding: 24px 24px 0;
+.writing-meta .field,
+.editor-address-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
 }
-.writing-meta .field {
-  margin-bottom: 16px;
+.editor-address-row {
+  min-height: 36px;
+}
+.editor-address-row > span,
+.writing-meta .field > span {
+  color: var(--ink-6);
+  font-weight: 400;
+}
+.editor-address-row > div {
+  padding: 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  overflow-wrap: anywhere;
+}
+.editor-address-row > div > span {
+  color: var(--ink-6);
+}
+.writing-meta .field input {
+  background: transparent;
+}
+.writing-meta .field input:hover,
+.writing-meta .field input:focus {
+  background: var(--glass-button);
 }
 .format-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin: 22px 0 14px;
+  margin: 24px 0 16px;
 }
 .format-row .select {
   width: 140px;
@@ -705,16 +780,17 @@ pre {
 .editor-toolbar {
   display: flex;
   gap: 2px;
-  padding: 8px 16px;
+  padding: 6px;
   background: var(--glass-card);
+  border-radius: var(--radius-control);
   flex-wrap: wrap;
 }
 .editor-toolbar button {
   color: var(--ink-4);
 }
 .prose-editor {
-  padding: 24px;
-  min-height: 420px;
+  padding: 28px 12px;
+  min-height: max(360px, calc(100dvh - 500px));
   outline: none;
   font-size: 15px;
   line-height: 1.9;
@@ -770,7 +846,7 @@ pre {
     monospace;
   resize: vertical;
   outline: none;
-  background: var(--glass-reading);
+  background: transparent;
   color: var(--ink-3);
 }
 .editor-footer {
@@ -778,9 +854,9 @@ pre {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 4px 24px 12px;
+  padding: 4px 12px 0;
+  margin-top: auto;
   color: var(--ink-6);
-  background: var(--glass-card);
 }
 .editor-footer .check {
   font-size: 11px;
@@ -789,16 +865,13 @@ pre {
   white-space: nowrap;
 }
 .preview-panel {
-  background: var(--glass-reading);
-  border-radius: var(--radius-panel);
   overflow: hidden;
 }
 .preview-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  background: var(--glass-bar);
+  padding: 0 0 16px;
   font-size: 12px;
   color: var(--ink-5);
 }
@@ -810,9 +883,14 @@ pre {
   background: var(--glass-raised);
   color: var(--brand-soft);
 }
+.preview-message {
+  max-width: 100%;
+  margin: 0 auto;
+  transition: width 0.2s;
+}
 .preview-envelope {
   background: var(--glass-list);
-  margin: 18px 18px 0;
+  margin: 0;
   border-radius: var(--radius-control) var(--radius-control) 0 0;
   padding: 20px 22px;
 }
@@ -831,12 +909,13 @@ pre {
   margin-top: 14px;
 }
 .preview-canvas {
-  padding: 0 18px 18px;
+  padding: 0;
   display: flex;
   justify-content: center;
 }
 .preview-canvas iframe {
-  height: 560px;
+  width: 100%;
+  height: max(560px, calc(100dvh - 340px));
   border: 0;
   max-width: 100%;
   /* The email canvas represents the sent message, independent of app theme. */
@@ -896,12 +975,6 @@ pre {
   .sidebar {
     width: 190px;
     padding: 28px 15px;
-  }
-  .editor-grid {
-    grid-template-columns: 1fr;
-  }
-  .preview-canvas iframe {
-    height: 540px;
   }
   .settings-layout {
     grid-template-columns: 1fr;
@@ -1004,11 +1077,6 @@ pre {
     gap: 14px;
     flex-wrap: wrap;
   }
-  .newsletter-icon {
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-  }
   .form-grid {
     grid-template-columns: 1fr;
   }
@@ -1020,27 +1088,59 @@ pre {
     max-width: calc(100% - 24px) !important;
     padding: 22px !important;
   }
-  .writing-meta {
-    padding: 20px 20px 0;
+  .editor-header {
+    position: relative;
+    padding: 16px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .editor-heading {
+    width: 100%;
+  }
+  .editor-title {
+    flex: 1;
+  }
+  .editor-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .editor-actions button {
+    font-size: 12px;
+  }
+  .editor-view-switch {
+    padding: 8px 16px;
+  }
+  .editor-content {
+    padding: 20px 18px;
+  }
+  .writing-meta .field,
+  .editor-address-row {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .editor-address-row > div {
+    padding: 0 8px;
+  }
+  .writing-panel {
+    min-height: calc(100dvh - 220px);
   }
   .prose-editor {
-    padding: 22px;
-    min-height: 350px;
-  }
-  .editor-footer {
-    padding: 0 18px;
+    padding: 24px 8px;
   }
   .editor-toolbar {
-    padding: 7px 10px;
+    gap: 0;
+    padding: 4px;
   }
-  .preview-envelope {
-    margin: 12px 12px 0;
+  .editor-toolbar button {
+    width: 30px;
   }
-  .preview-canvas {
-    padding: 0 12px 12px;
+  .editor-footer {
+    padding: 0 8px;
   }
   .preview-canvas iframe {
-    height: 500px;
+    height: 65dvh;
+    min-height: 420px;
   }
   .stats strong {
     font-size: 30px;
