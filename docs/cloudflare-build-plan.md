@@ -4,7 +4,7 @@ The requested result is a newsletter application using Cloudflare Workers, D1, R
 
 ## Implementation
 
-Build a standalone React/Vite application in `cloudflare/`. Keep upstream source available as a reference. Reuse the MIT-licensed email renderer, Markdown helpers, CSV normalization, and existing shadcn components. Replace MongoDB, QStash, Vercel Blob, and SES integrations. No Next.js runtime is used by the new application.
+Build the React/Vite application at the repository root using ReplyMaven’s structure. Keep upstream source available in Git history. Reuse the MIT-licensed email renderer, Markdown helpers, CSV normalization, and existing shadcn components. Replace MongoDB, QStash, Vercel Blob, and SES integrations. No Next.js runtime is used by the new application.
 
 1. Foundation checkpoint: Worker API, SQL schema, session authentication, newsletter and contact management, R2 uploads, and local configuration.
 2. Sending checkpoint: campaign drafts and previews, audience snapshots, durable queue dispatch, rate control, scheduled sending, retry/uncertain-outcome handling, signed unsubscribe and confirmation links, delivery events, and reporting.
