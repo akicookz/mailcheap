@@ -4,3 +4,9 @@ LINK_SECRET=replace-with-at-least-32-random-characters
 APP_URL=http://127.0.0.1:5179
 LOCAL_PREVIEW=true
 SENDING_ENABLED=false
+
+# Optional: dashboard domain management. Use the account that runs this Worker.
+# Scope the token to that account and the zones you want to manage.
+# Keep the token server-side. DNS writes are blocked while LOCAL_PREVIEW=true.
+# CLOUDFLARE_ACCOUNT_ID=your-32-character-account-id
+# CLOUDFLARE_API_TOKEN=your-scoped-api-token

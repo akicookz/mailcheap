@@ -17,6 +17,7 @@ import {
 } from "./auth";
 import { admin } from "./routes/admin";
 import { campaigns } from "./routes/campaigns";
+import { domains } from "./routes/domains";
 import { publicRoutes, signup } from "./routes/public";
 import { consume, tick } from "./services/sending-service";
 import { consumeEvents } from "./services/event-service";
@@ -61,6 +62,7 @@ app.use("/api/logout", originGuard);
 app.post("/api/logout", logout);
 app.use("/api/admin/*", requireAuth, originGuard);
 app.route("/api/admin/campaigns", campaigns);
+app.route("/api/admin/domains", domains);
 app.route("/api/admin", admin);
 app.use("/api/v1/*", async (c, next) => {
   const token = c.req.header("authorization")?.replace(/^Bearer /, "") || "";
