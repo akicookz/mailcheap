@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { page } from "../views/public-page";
 import sanitizeHtml from "sanitize-html";
 import { type AppEnv, type Row } from "../types";
 import { all, one, run } from "../db/query";
@@ -20,18 +22,35 @@ async function readForm(request: Request) {
   });
   return data;
 }
-const css = `*{box-sizing:border-box}body{margin:0;background:#f6f7f9;color:#242932;font:16px/1.7 system-ui,sans-serif}main{max-width:760px;margin:64px auto;padding:32px;background:white;border-radius:16px}h1{font-size:36px;line-height:1.2;letter-spacing:-.03em}h2{line-height:1.3}a{color:#245b46}p{color:#5f6771}input,button{font:inherit;padding:12px 16px;border:0;border-radius:8px}input{background:#f1f3f5;width:100%;margin-bottom:12px}button{background:#245b46;color:white;cursor:pointer}article{padding:18px 0}small{color:#69727c}img{max-width:100%;height:auto}@media(max-width:600px){main{margin:16px;padding:24px}h1{font-size:28px}}`;
-function page(title: string, body: string) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>${css}</style></head><body><main>${body}</main></body></html>`;
-}
 publicRoutes.use("*", async (c, next) => {
   await next();
   c.header(
     "Content-Security-Policy",
-    "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+    "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
   );
   c.header("Referrer-Policy", "no-referrer");
   c.header("Cache-Control", "no-store");
+});
+publicRoutes.onError((error, c) => {
+  const status = error instanceof HTTPException ? error.status : 500;
+  const message =
+    error instanceof HTTPException
+      ? error.message
+      : "Please try again in a moment.";
+  const title =
+    status === 404
+      ? "Page not found"
+      : status === 503
+        ? "Subscriptions are not open yet"
+        : "We couldn’t complete that request";
+  if (!(error instanceof HTTPException))
+    console.error(
+      JSON.stringify({ event: "public_page_failed", message: error.message }),
+    );
+  return c.html(
+    page(title, `<h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p>`),
+    status,
+  );
 });
 publicRoutes.get("/unsubscribe", async (c) => {
   const token = c.req.query("token") || "";
@@ -265,7 +284,7 @@ publicRoutes.get("/:slug/:issue", async (c) => {
   return c.html(
     page(
       frozen.subject,
-      `<a href="/public/${escapeHtml(list.slug)}">← ${escapeHtml(list.name)}</a><h1>${escapeHtml(frozen.subject)}</h1><small>${escapeHtml(issue.sent_at?.slice(0, 10) || "")}</small>${content}`,
+      `<a class="back-link" href="/public/${escapeHtml(list.slug)}">← ${escapeHtml(list.name)}</a><h1>${escapeHtml(frozen.subject)}</h1><small>${escapeHtml(issue.sent_at?.slice(0, 10) || "")}</small><div class="archive-message">${content}</div>`,
     ),
   );
 });
@@ -284,7 +303,7 @@ publicRoutes.get("/:slug", async (c) => {
   return c.html(
     page(
       list.name,
-      `<h1>${escapeHtml(list.name)}</h1><p>${escapeHtml(list.description)}</p><form method="post" action="/public/${escapeHtml(list.slug)}/subscribe"><label for="email">Your email address</label><input id="email" name="email" type="email" required placeholder="you@example.com"><button>Subscribe</button></form><h2>Past issues</h2>${issues.length ? issues.map((issue) => `<article><small>${escapeHtml(issue.sent_at?.slice(0, 10) || "")}</small><h2><a href="/public/${escapeHtml(list.slug)}/${escapeHtml(issue.archive_slug)}">${escapeHtml(issue.subject)}</a></h2><p>${escapeHtml(issue.preview_text)}</p></article>`).join("") : "<p>The first issue is on its way.</p>"}`,
+      `<h1>${escapeHtml(list.name)}</h1><p>${escapeHtml(list.description)}</p><form method="post" action="/public/${escapeHtml(list.slug)}/subscribe"><label for="email">Your email address</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com"><button>Subscribe</button></form><h2 class="archive-heading">Past issues</h2>${issues.length ? issues.map((issue) => `<article><small>${escapeHtml(issue.sent_at?.slice(0, 10) || "")}</small><h2><a href="/public/${escapeHtml(list.slug)}/${escapeHtml(issue.archive_slug)}">${escapeHtml(issue.subject)}</a></h2><p>${escapeHtml(issue.preview_text)}</p></article>`).join("") : '<p class="archive-empty">No issues published yet. Subscribe to receive the first one.</p>'}`,
     ),
   );
 });
