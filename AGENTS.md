@@ -34,7 +34,7 @@ Use Bun. `bun run dev` runs frontend and Worker through the Cloudflare Vite plug
 
 Run `bun run lint`, `bun run typecheck`, and `bun run build` before completion claims. Frontend JSX is linted and bundled; Worker TypeScript is checked strictly. Browser checks are still required. `bun run cf-typegen` regenerates bindings.
 
-Edit database definitions in `worker/db/*.ts`, then use `bun run db:generate` to generate SQL. Generation writes files only. Applying SQL with `db:migrate:dev` or `db:migrate:prod` requires approval. The initial schema was applied to local D1 on 2026-10-11 with user approval. No remote schema has been applied.
+Edit database definitions in `worker/db/*.ts`, then use `bun run db:generate` to generate SQL. Generation writes files only. Applying SQL with `db:migrate:dev` or `db:migrate:prod` requires approval. The initial schema was applied to local D1 on 2026-10-11 and the new remote `mailcheap` D1 database on 2026-10-12, both with user approval. The app is deployed at `https://mailcheap-cloudflare.launchfastshop.workers.dev` with sending disabled.
 
 Sending is disabled by default. Use Cloudflare Email Sending, not SES or Email Routing forwarding. Never send a live test or campaign without an authorized recipient. Never put secrets or recipient data into commits.
 

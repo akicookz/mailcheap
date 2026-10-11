@@ -32,6 +32,8 @@ Sending starts disabled. Wrangler's local Email binding simulates delivery; sett
 
 ## Cloudflare setup
 
+The live dashboard is deployed at **https://mailcheap-cloudflare.launchfastshop.workers.dev** in the LaunchFast account. Its fresh D1 database, R2 image bucket, and four queues were created on 2026-10-12. The initial remote schema was applied with user approval. Sending remains disabled. The live administrator login matches the local login; private login details are in the ignored `.env.live-login.txt` file.
+
 Deploy only after the requested deployment details and database approval are available:
 
 1. Create a fresh D1 database named `mailcheap`, add its returned `database_id` and the chosen `account_id` to `wrangler.jsonc`, then apply the schema remotely after approval.
@@ -77,7 +79,7 @@ Domain creation is authenticated, checks the request origin, resolves the zone w
 
 The restructured app passes lint, Worker type checking, the frontend and Worker production build, and Wrangler deployment dry run. The local health endpoint responds; unauthenticated admin requests and cross-origin login writes are rejected. The login page has been checked through browser clicks at desktop and mobile sizes.
 
-The initial schema was applied to **local D1 only** on 2026-10-11 with user approval. Browser sign-in and the authenticated Overview page work against that database. Other dashboard flows, queue consumption, provider events, and real delivery have **not** been verified at runtime. No remote schema has been applied. No remote app deployment or campaign send has been performed. No tests were written, per workspace instructions.
+The initial schema was applied to local D1 on 2026-10-11 and to the new remote `mailcheap` D1 database on 2026-10-12, both with user approval. The Worker deployment succeeded. Live browser checks confirmed administrator sign-in, Overview data loading, the newsletter setup form, Settings, and Domains. The live database starts empty; local preview data was not copied. Queue consumption, provider events, live domain configuration, and actual email delivery remain unverified. The domain management API token and Email Sending event subscription still need configuration before live sending is enabled. No campaign or test email was sent. No tests were written, per workspace instructions.
 
 ## API
 
