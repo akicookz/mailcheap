@@ -5,6 +5,7 @@ import {
   Users,
   BookOpen,
   Settings,
+  Globe,
   LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ export default function Layout({ onLogout }) {
             ["/campaigns", "Campaigns", Send],
             ["/contacts", "Contacts", Users],
             ["/newsletters", "Newsletters", BookOpen],
+            ["/domains", "Domains", Globe],
             ["/settings", "Settings", Settings],
           ].map(([path, label, Icon]) => (
             <NavLink key={path} to={path} end={path === "/"}>

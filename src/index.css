@@ -613,6 +613,10 @@ td small {
   font-size: 13px;
   margin-top: 18px;
 }
+.field small .text-link,
+.settings-layout .actions .text-link {
+  margin-top: 0;
+}
 pre {
   overflow: auto;
   padding: 16px;
@@ -1024,7 +1028,7 @@ pre {
   }
   .sidebar nav {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     margin-top: 20px;
     gap: 4px;
   }
@@ -1393,5 +1397,237 @@ input:-webkit-autofill {
   .filters > .select {
     width: 100%;
     flex-basis: 100%;
+  }
+}
+
+/* Domain setup uses the same quiet, border-free surfaces as the dashboard. */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  margin-bottom: 12px;
+  color: var(--ink-5);
+  font-size: 13px;
+}
+.back-link:hover {
+  color: var(--ink-1);
+}
+.domain-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.62fr);
+  gap: 24px;
+  align-items: start;
+}
+.domain-layout > * {
+  min-width: 0;
+}
+.domain-connection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.domain-connection p {
+  margin-top: 6px;
+  max-width: 56ch;
+}
+.domain-add form {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+.domain-add form .field {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.domain-add form button {
+  min-height: 40px;
+}
+.domain-result {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: var(--radius-control);
+  background: var(--glass-button);
+}
+.domain-result h3 {
+  margin: 12px 0 8px;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.domain-result h3:first-child {
+  margin-top: 0;
+}
+.domain-result p {
+  margin-bottom: 16px;
+}
+.domain-add > .notice {
+  margin-top: 20px;
+}
+.domain-steps {
+  list-style: decimal;
+  padding-left: 22px;
+  display: grid;
+  gap: 20px;
+}
+.domain-steps li {
+  padding-left: 4px;
+  color: var(--ink-4);
+}
+.domain-steps li::marker {
+  color: var(--brand-soft);
+  font-variant-numeric: tabular-nums;
+}
+.domain-steps strong {
+  color: var(--ink-1);
+  font-weight: 500;
+}
+.domain-steps p {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.domain-steps .text-link {
+  margin-top: 8px;
+}
+.domain-steps.compact {
+  font-size: 13px;
+  gap: 12px;
+  margin: 16px 0 20px;
+}
+.domain-guide > h2 {
+  margin-bottom: 20px;
+}
+.domain-guide strong {
+  overflow-wrap: anywhere;
+}
+.domain-count {
+  color: var(--ink-5);
+  font-size: 12px;
+}
+.domain-list {
+  display: grid;
+  gap: 8px;
+}
+.domain-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-control);
+  background: var(--glass-button);
+  transition: background-color 150ms ease;
+}
+.domain-row:hover {
+  background: var(--glass-raised);
+}
+.domain-row > div {
+  flex: 1;
+  min-width: 0;
+}
+.domain-row strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.domain-row small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-5);
+}
+.domain-row > svg {
+  flex-shrink: 0;
+  color: var(--ink-5);
+}
+.domain-note {
+  margin: 20px 0;
+  font-size: 13px;
+}
+.dns-records {
+  display: grid;
+  gap: 16px;
+}
+.dns-record {
+  padding: 20px;
+  border-radius: var(--radius-control);
+  background: var(--glass-button);
+}
+.dns-record .section-heading {
+  margin-bottom: 16px;
+}
+.dns-label {
+  font-size: 12px;
+  color: var(--ink-5);
+  margin: 12px 0 5px;
+}
+.dns-value {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  background: var(--glass-card);
+  border-radius: 8px;
+  padding: 8px 8px 8px 12px;
+}
+.dns-value code {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  padding: 6px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  user-select: text;
+}
+.dns-value button {
+  flex-shrink: 0;
+}
+.domain-steps .dns-value,
+.domain-result .dns-value {
+  margin: 10px 0;
+}
+.dns-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  color: var(--ink-5);
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+  .domain-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+@media (max-width: 700px) {
+  .domain-connection {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .domain-add form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .domain-add form button {
+    align-self: flex-start;
+  }
+  .domain-result,
+  .dns-record {
+    padding: 16px;
+  }
+  .domain-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .domain-row > div {
+    flex-basis: 100%;
+  }
+  .domain-row > svg {
+    margin-left: auto;
+  }
+  .domain-count {
+    text-align: right;
   }
 }

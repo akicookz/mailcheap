@@ -36,13 +36,32 @@ Deploy only after the requested deployment details and database approval are ava
 
 1. Create a fresh D1 database named `mailcheap`, add its returned `database_id` and the chosen `account_id` to `wrangler.jsonc`, then apply the schema remotely after approval.
 2. Create the `mailcheap-images` R2 bucket and queues `mailcheap-send`, `mailcheap-send-failed`, `mailcheap-email-events`, and `mailcheap-events-failed`.
-3. Configure and verify an Email Sending subdomain. Use an address on that subdomain in newsletter settings. Incoming Email Routing alone is not the outbound service used by this app.
+3. Connect domain management as described below, then add and check a sending domain in **Domains**. Use an address on that exact domain in newsletter settings. Incoming Email Routing alone is not the outbound service used by this app.
 4. Set Worker secrets `ADMIN_EMAIL`, `ADMIN_PASSWORD` (16+ characters), and `LINK_SECRET` (32+ random characters). Test messages go only to `ADMIN_EMAIL`. Changing administrator credentials invalidates sessions. Preserve `LINK_SECRET` to keep existing email links valid.
 5. Set `APP_URL` to the final HTTPS origin. Keep `LOCAL_PREVIEW=false` and `SENDING_ENABLED=false` for initial deployment. Run `bun run deploy` when deployment is authorized.
 6. Add an Email Sending event subscription with source `email.sending` and destination queue `mailcheap-email-events`. Include delivered, bounced, complained, failed, and rejected events. The queue consumer expects Cloudflare's native event envelope; no public webhook is exposed.
 7. Verify login, newsletter creation, draft save, preview, image upload, CSV import, scheduling, and unsubscribe with controlled data. Enable sending only after the sender and event subscription are ready; send one controlled test and verify its provider event before any campaign.
 
 Cloudflare account access, quotas, and acceptance of newsletter traffic still need live verification. A successful build or package dry run does not establish email delivery. Current provider references: [Workers Email API](https://developers.cloudflare.com/email-service/api/send-emails/workers-api/) and [event subscriptions](https://developers.cloudflare.com/email-service/platform/event-subscriptions/).
+
+## Domain management
+
+The dashboard's **Domains** page uses Cloudflare as the source of truth. No database migration is needed. Existing sending domains appear automatically once connected.
+
+Set `CLOUDFLARE_ACCOUNT_ID` to the account that runs the Worker. Set `CLOUDFLARE_API_TOKEN` as a Worker secret, using a token with Email Sending edit access and Zone read access scoped to that account and the zones you want to manage. The account must have Email Sending access. Never put this token in frontend environment variables or commit it. The app's **Set up connection** dialog shows the steps. Applying these settings to a deployed Worker requires deployment approval under this workspace's rules.
+
+```text
+Domains → enter a domain → Check domain
+  Active zone in this account → Configure domain → Cloudflare creates sending DNS
+  Pending zone               → activation steps and assigned nameservers
+  Domain outside the account → Cloudflare connection instructions
+```
+
+Email Sending currently [requires Cloudflare DNS](https://developers.cloudflare.com/email-service/get-started/send-emails/). For an externally hosted domain, first add its zone to the connected Cloudflare account, review imported website and mail records, and follow Cloudflare's nameserver and DNSSEC activation instructions. Copying SPF/DKIM records alone does not bypass that requirement. If a domain is already in the account but not found, check the token's zone scope.
+
+The domain detail page shows the actual records returned by Cloudflare with copy buttons. **Check DNS** compares public DNS to those records; “Published” means the expected record was found, not that delivery was tested. Cloudflare's enabled state is shown separately. Existing DMARC policies should be reviewed before changing them. A disabled domain can be re-enabled by adding the same name again.
+
+Domain creation is authenticated, checks the request origin, resolves the zone within the configured account, and is blocked when `LOCAL_PREVIEW=true`. Local development never changes real DNS through this feature. Domain lookup, setup instructions, and missing-connection states can be used without live writes. Live provider setup and DNS publication still require verification with the connected account; no live domain or email was created during implementation.
 
 ## Delivery behavior
 

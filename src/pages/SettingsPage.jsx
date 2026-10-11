@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { Plus, ArrowUpRight, Copy, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -60,9 +60,8 @@ export default function SettingsPage() {
             </div>
             {!status?.sending_enabled && (
               <div className="notice">
-                Sending is off. Enable a sender domain in Cloudflare Email
-                Sending, configure delivery events, then enable sending for this
-                app.
+                Sending is off. Configure a sender in Domains, configure
+                delivery events, then enable sending for this app.
               </div>
             )}
             {status?.uncertain > 0 && (
@@ -72,14 +71,19 @@ export default function SettingsPage() {
                 action.
               </div>
             )}
-            <a
-              className="text-link"
-              href="https://dash.cloudflare.com/?to=/:account/email/sending"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open Cloudflare <ArrowUpRight size={16} />
-            </a>
+            <div className="actions">
+              <Button asChild variant="secondary">
+                <Link to="/domains">Manage domains</Link>
+              </Button>
+              <a
+                className="text-link"
+                href="https://dash.cloudflare.com/?to=/:account/email/sending"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open Cloudflare <ArrowUpRight size={16} />
+              </a>
+            </div>
           </section>
           <section className="panel">
             <div className="section-heading">

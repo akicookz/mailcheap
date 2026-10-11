@@ -1,4 +1,5 @@
 import { Input, Textarea, Field } from "@/components/app-ui";
+import { Link } from "react-router-dom";
 
 export const blankNewsletter = {
   name: "",
@@ -47,7 +48,14 @@ export default function NewsletterFields({ values, setValues, full = false }) {
         </Field>
         <Field
           label="Sender email"
-          hint="Use a domain enabled in Cloudflare Email Sending."
+          hint={
+            <>
+              Use an enabled sending domain.{" "}
+              <Link className="text-link" to="/domains">
+                Manage domains
+              </Link>
+            </>
+          }
         >
           <Input
             required
