@@ -1,18 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mailcheap-cloudflare",
+  "account_id": "35bc7a4522237728214ba9d54c36002e",
+  "workers_dev": true,
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-11",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
-        "binding": "ASSETS",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     "run_worker_first": true,
   },
   "observability": { "enabled": true, "traces": { "enabled": true } },
   "vars": {
     "SENDING_ENABLED": "false",
-    "APP_URL": "http://localhost:5179",
+    "APP_URL": "https://mailcheap-cloudflare.launchfastshop.workers.dev",
+    "CLOUDFLARE_ACCOUNT_ID": "35bc7a4522237728214ba9d54c36002e",
     "SEND_PER_SECOND": "2",
     "LOCAL_PREVIEW": "false",
     "EVENTS_QUEUE": "mailcheap-email-events",
@@ -21,6 +24,7 @@
     {
       "binding": "DB",
       "database_name": "mailcheap",
+      "database_id": "0ee7dd90-606d-44cc-b367-31eaa8b6471a",
       "migrations_dir": "worker/db/drizzle",
       "remote": false,
     },
