@@ -1,0 +1,49 @@
+{
+  "name": "mailcheap-cloudflare",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "wrangler dev --port 8787",
+    "typecheck": "tsc --noEmit",
+    "cf:types": "wrangler types --strict-vars=false",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@tiptap/extension-image": "^3.31.4",
+    "@tiptap/extensions": "^3.31.4",
+    "@tiptap/react": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.4.0",
+    "hono": "^4.12.0",
+    "lucide-react": "^1.52.0",
+    "marked": "^18.0.14",
+    "papaparse": "^5.5.3",
+    "radix-ui": "^1.6.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.9.0",
+    "sanitize-html": "^2.18.0",
+    "sonner": "^2.0.8",
+    "zod": "^4.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/sanitize-html": "^2.16.0",
+    "@vitejs/plugin-react": "latest",
+    "prettier": "^3.9.10",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0",
+    "vite": "^8.3.4",
+    "wrangler": "4.149.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

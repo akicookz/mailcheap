@@ -1,0 +1,6 @@
+ADMIN_EMAIL=you@example.com
+ADMIN_PASSWORD=replace-with-at-least-16-characters
+LINK_SECRET=replace-with-at-least-32-random-characters
+APP_URL=http://127.0.0.1:5179
+LOCAL_PREVIEW=true
+SENDING_ENABLED=false
