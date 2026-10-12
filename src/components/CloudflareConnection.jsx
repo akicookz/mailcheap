@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { Badge, Button, ErrorState, Loading, Modal } from "@/components/app-ui";
 import { CopyValue, ExternalLink } from "@/components/domain-ui";
 
-export default function CloudflareConnection() {
+export default function CloudflareConnection({ compact = false }) {
   const connection = useResource("admin/cloudflare", { freshOnMount: true });
   const client = useQueryClient();
   const [setup, setSetup] = useState(false);
@@ -30,10 +30,14 @@ export default function CloudflareConnection() {
   }
   return (
     <>
-      <section className="panel domain-connection">
+      <section
+        className={
+          compact ? "cloudflare-connection-row" : "panel domain-connection"
+        }
+      >
         <div>
           <div className="section-heading">
-            <h2>Cloudflare connection</h2>
+            <h2>{compact ? "Cloudflare" : "Cloudflare connection"}</h2>
             {data && (
               <Badge status={data.configured ? "active" : "paused"}>
                 {data.configured
@@ -44,18 +48,20 @@ export default function CloudflareConnection() {
               </Badge>
             )}
           </div>
-          <p>
-            {data?.configured
-              ? "Manage sending domains in the Cloudflare account that runs Mailcheap."
-              : "Connect once to find your zones, enable Email Sending, and configure its DNS records."}
-          </p>
-          {data?.configured && data.method === "api_token" && (
+          {!compact && (
+            <p>
+              {data?.configured
+                ? "Manage sending domains in the Cloudflare account that runs Mailcheap."
+                : "Connect once to find your zones, enable Email Sending, and configure its DNS records."}
+            </p>
+          )}
+          {!compact && data?.configured && data.method === "api_token" && (
             <p>
               Connected with a Worker API token. Set up OAuth to use the Connect
               button.
             </p>
           )}
-          {data?.local_preview && (
+          {!compact && data?.local_preview && (
             <p>
               Local preview can check the connection. Domain changes remain
               disabled.
@@ -69,7 +75,11 @@ export default function CloudflareConnection() {
           <Loading />
         ) : data ? (
           <div className="actions">
-            <Button onClick={connect} disabled={busy}>
+            <Button
+              onClick={connect}
+              disabled={busy}
+              variant={compact ? "secondary" : "default"}
+            >
               {busy
                 ? "Connecting…"
                 : data.configured

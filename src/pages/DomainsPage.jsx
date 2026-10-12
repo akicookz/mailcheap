@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { useResource } from "@/hooks/use-resource";
@@ -14,6 +14,7 @@ import {
   Heading,
   Input,
   Loading,
+  Modal,
 } from "@/components/app-ui";
 
 import CloudflareConnection from "@/components/CloudflareConnection";
@@ -31,7 +32,10 @@ function DomainInstructions({ result, localPreview, onConfigure, busy }) {
           Mailcheap needs access to Cloudflare to check where {result.name} is
           managed.
         </p>
-        <p>Use Connect Cloudflare above, then check this domain again.</p>
+        <p>
+          Close this dialog and connect Cloudflare, then check this domain
+          again.
+        </p>
       </div>
     );
   if (result.mode === "managed")
@@ -50,7 +54,7 @@ function DomainInstructions({ result, localPreview, onConfigure, busy }) {
             configure this domain.
           </p>
         ) : (
-          <Button onClick={onConfigure} disabled={busy}>
+          <Button type="button" onClick={onConfigure} disabled={busy}>
             {busy ? "Configuring…" : "Configure domain"}
             <ArrowRight size={16} />
           </Button>
@@ -107,6 +111,7 @@ export default function DomainsPage() {
   const resource = useResource("admin/domains", { freshOnMount: true });
   const navigate = useNavigate();
   const client = useQueryClient();
+  const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -145,25 +150,16 @@ export default function DomainsPage() {
     }
   };
   return (
-    <>
-      <Heading
-        title="Domains"
-        description="Connect a domain and send from an address of your own."
-      >
+    <div className="domains-page">
+      <Heading title="Domains" description="Manage the domains you send from.">
         <Button
-          variant="secondary"
-          disabled={refreshing || resource.loading}
-          onClick={async () => {
-            setRefreshing(true);
-            try {
-              await resource.refresh();
-            } finally {
-              setRefreshing(false);
-            }
+          onClick={() => {
+            setAdding(true);
+            setResult(null);
+            setError("");
           }}
         >
-          <RefreshCw size={16} className={refreshing ? "spin" : ""} />
-          Refresh
+          <Plus size={16} /> Add domain
         </Button>
       </Heading>
       {oauthMessage && (
@@ -188,139 +184,136 @@ export default function DomainsPage() {
           </Button>
         </div>
       )}
-      <CloudflareConnection />
-      {resource.loading ? (
-        <Loading />
-      ) : resource.error ? (
-        <ErrorState error={resource.error} retry={resource.refresh} />
-      ) : (
-        <>
-          <div className="domain-layout">
-            <section className="panel domain-add">
-              <h2>Add a sending domain</h2>
-              <p>
-                Use your domain or a dedicated subdomain, like news.example.com.
-              </p>
-              <form
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  setBusy(true);
-                  setResult(null);
-                  setError("");
-                  try {
-                    setResult(
-                      await api(
-                        `admin/domains/lookup?name=${encodeURIComponent(name.trim())}`,
-                      ),
-                    );
-                  } catch (e) {
-                    setError(e.message);
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
+      <section className="panel domains-surface">
+        <CloudflareConnection compact />
+        <div className="domains-list-heading">
+          <h2>
+            Sending domains{" "}
+            <span className="domain-count">
+              {resource.data ? domains.length : ""}
+            </span>
+          </h2>
+          <Button
+            variant="ghost"
+            disabled={refreshing || resource.loading}
+            onClick={async () => {
+              setRefreshing(true);
+              try {
+                await client.invalidateQueries({
+                  queryKey: ["api", "admin/cloudflare"],
+                });
+                await resource.refresh();
+              } finally {
+                setRefreshing(false);
+              }
+            }}
+          >
+            <RefreshCw size={15} className={refreshing ? "spin" : ""} /> Refresh
+          </Button>
+        </div>
+        {resource.loading ? (
+          <Loading />
+        ) : resource.error ? (
+          <ErrorState error={resource.error} retry={resource.refresh} />
+        ) : domains.length ? (
+          <div className="domain-list">
+            {domains.map((domain) => (
+              <Link
+                className="domain-row"
+                to={`/domains/${encodeURIComponent(domain.name)}`}
+                key={domain.name}
               >
-                <Field label="Domain">
-                  <Input
-                    required
-                    disabled={busy}
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    maxLength={253}
-                    placeholder="news.example.com"
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      setResult(null);
-                      setError("");
-                    }}
-                  />
-                </Field>
-                <Button type="submit" disabled={busy}>
-                  {busy ? "Working…" : "Check domain"}
-                  <ArrowRight size={16} />
-                </Button>
-              </form>
-              {error && <ErrorState error={error} />}
-              <DomainInstructions
-                result={result}
-                localPreview={resource.data?.local_preview}
-                onConfigure={configure}
-                busy={busy}
-              />
-            </section>
-            <aside className="panel domain-guide">
-              <h2>From domain to inbox</h2>
-              <ol className="domain-steps">
-                <li>
-                  <strong>Find your zone</strong>
-                  <p>
-                    We check the connected Cloudflare account for your domain.
-                  </p>
-                </li>
-                <li>
-                  <strong>Configure sending</strong>
-                  <p>
-                    Cloudflare creates the email records for active zones. Other
-                    domains get connection instructions.
-                  </p>
-                </li>
-                <li>
-                  <strong>Choose your sender</strong>
-                  <p>
-                    Use an address on the exact domain you configured in your
-                    newsletter settings.
-                  </p>
-                </li>
-              </ol>
-            </aside>
+                <div>
+                  <strong>{domain.name}</strong>
+                  <small>{domain.zone}</small>
+                </div>
+                <Badge status={domain.enabled ? "active" : "paused"}>
+                  {domain.enabled ? "Enabled" : "Disabled"}
+                </Badge>
+                <ArrowRight size={16} />
+              </Link>
+            ))}
           </div>
-          <section className="panel">
-            <div className="section-heading">
-              <h2>Sending domains</h2>
-              <span className="domain-count">
-                {resource.data?.configured
-                  ? `${domains.length} ${domains.length === 1 ? "domain" : "domains"}`
-                  : "Not connected"}
-              </span>
-            </div>
-            {domains.length ? (
-              <div className="domain-list">
-                {domains.map((domain) => (
-                  <Link
-                    className="domain-row"
-                    to={`/domains/${encodeURIComponent(domain.name)}`}
-                    key={domain.name}
-                  >
-                    <div>
-                      <strong>{domain.name}</strong>
-                      <small>Zone: {domain.zone}</small>
-                    </div>
-                    <Badge status={domain.enabled ? "active" : "paused"}>
-                      {domain.enabled ? "Enabled" : "Disabled"}
-                    </Badge>
-                    <ArrowRight size={16} />
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <Empty
-                title={
-                  resource.data?.configured
-                    ? "No sending domains yet"
-                    : "Your domains will appear here"
-                }
-                description={
-                  resource.data?.configured
-                    ? "Add a domain above to configure Email Sending."
-                    : "Connect Cloudflare to load existing domains and add new ones."
-                }
-              />
-            )}
-          </section>
-        </>
-      )}
-    </>
+        ) : (
+          <Empty
+            title="No domains yet"
+            description={
+              resource.data?.configured
+                ? "Add a domain to send emails from an address you own."
+                : "Connect Cloudflare, then add your sending domain."
+            }
+          />
+        )}
+      </section>
+      <Modal
+        open={adding}
+        onOpenChange={(open) => {
+          if (!busy) setAdding(open);
+        }}
+        title="Add a domain"
+        description="Use a domain or subdomain you own, such as news.example.com."
+      >
+        <form
+          className="domain-add-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setBusy(true);
+            setResult(null);
+            setError("");
+            try {
+              setResult(
+                await api(
+                  `admin/domains/lookup?name=${encodeURIComponent(name.trim())}`,
+                ),
+              );
+            } catch (e) {
+              setError(e.message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <Field label="Domain">
+            <Input
+              autoFocus
+              required
+              disabled={busy}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              maxLength={253}
+              placeholder="news.example.com"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setResult(null);
+                setError("");
+              }}
+            />
+          </Field>
+          {error && <ErrorState error={error} />}
+          <DomainInstructions
+            result={result}
+            localPreview={resource.data?.local_preview}
+            onConfigure={configure}
+            busy={busy}
+          />
+          <div className="domain-form-actions">
+            <Button
+              variant="ghost"
+              type="button"
+              disabled={busy}
+              onClick={() => setAdding(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={busy}>
+              {busy ? "Checking…" : result ? "Check again" : "Continue"}
+              <ArrowRight size={16} />
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
   );
 }

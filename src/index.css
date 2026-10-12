@@ -1631,3 +1631,82 @@ input:-webkit-autofill {
     text-align: right;
   }
 }
+
+.domains-surface {
+  padding: 0;
+  overflow: hidden;
+}
+.cloudflare-connection-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 24px;
+  background: var(--glass-button);
+}
+.cloudflare-connection-row .section-heading {
+  justify-content: flex-start;
+  gap: 12px;
+  margin: 0;
+}
+.cloudflare-connection-row h2 {
+  font-size: 13px;
+  font-weight: 500;
+}
+.cloudflare-connection-row .loading {
+  padding: 0;
+}
+.domains-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 0;
+}
+.domains-list-heading h2 {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 14px;
+}
+.domains-list-heading .domain-count {
+  font-variant-numeric: tabular-nums;
+}
+.domains-surface > .empty {
+  min-height: 220px;
+  padding: 32px 24px 48px;
+}
+.domains-surface .empty h2 {
+  font-size: 16px;
+  font-weight: 500;
+}
+.domains-surface > .domain-list,
+.domains-surface > .notice {
+  margin: 16px 24px 24px;
+}
+.domain-add-form .domain-result {
+  margin-top: 0;
+  background: transparent;
+  padding: 0;
+}
+.domain-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+@media (max-width: 700px) {
+  .cloudflare-connection-row {
+    padding: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .domains-list-heading {
+    padding: 16px 16px 0;
+  }
+  .domains-surface > .domain-list,
+  .domains-surface > .notice {
+    margin: 12px 16px 16px;
+  }
+}
