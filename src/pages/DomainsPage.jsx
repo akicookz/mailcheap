@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -14,76 +14,14 @@ import {
   Heading,
   Input,
   Loading,
-  Modal,
 } from "@/components/app-ui";
 
+import CloudflareConnection from "@/components/CloudflareConnection";
 import { CopyValue, ExternalLink } from "@/components/domain-ui";
 
 const cloudflareDashboard = "https://dash.cloudflare.com/";
 
-function ConnectionSetup({ open, onOpenChange }) {
-  return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Connect Cloudflare"
-      description="Set this up once. Then manage your sending domains here."
-      wide
-    >
-      <ol className="domain-steps">
-        <li>
-          <strong>Use the account that runs Mailcheap</strong>
-          <p>
-            Copy its account ID from Cloudflare. Email Sending must be available
-            on this account.
-          </p>
-        </li>
-        <li>
-          <strong>Create a scoped API token</strong>
-          <p>
-            Give it Email Sending edit access and Zone read access for the
-            domains you want to manage.
-          </p>
-          <ExternalLink href="https://dash.cloudflare.com/profile/api-tokens">
-            Create a token
-          </ExternalLink>
-        </li>
-        <li>
-          <strong>Add the connection to your Worker</strong>
-          <p>
-            In Workers &amp; Pages → Mailcheap → Settings → Variables and
-            Secrets, add the account ID and save the API token as a secret.
-          </p>
-          <CopyValue
-            value="CLOUDFLARE_ACCOUNT_ID"
-            label="account ID variable name"
-          />
-          <CopyValue
-            value="CLOUDFLARE_API_TOKEN"
-            label="API token secret name"
-          />
-          <p>
-            Use the same account for the Worker and its sending domains. The
-            token stays on the server.
-          </p>
-        </li>
-        <li>
-          <strong>Return here and refresh</strong>
-          <p>Your existing sending domains will appear automatically.</p>
-        </li>
-      </ol>
-      <Button onClick={() => onOpenChange(false)}>Got it</Button>
-    </Modal>
-  );
-}
-
-function DomainInstructions({
-  result,
-  localPreview,
-  onConfigure,
-  onConnect,
-  busy,
-}) {
+function DomainInstructions({ result, localPreview, onConfigure, busy }) {
   if (!result) return null;
   if (result.mode === "unconnected")
     return (
@@ -93,9 +31,7 @@ function DomainInstructions({
           Mailcheap needs access to Cloudflare to check where {result.name} is
           managed.
         </p>
-        <Button variant="secondary" onClick={onConnect}>
-          Set up connection
-        </Button>
+        <p>Use Connect Cloudflare above, then check this domain again.</p>
       </div>
     );
   if (result.mode === "managed")
@@ -136,7 +72,7 @@ function DomainInstructions({
       <p>
         {result.mode === "pending"
           ? "This zone is in your account, but it is not active yet."
-          : "This domain was not found in the connected account. If it is already there, check your API token’s zone access."}{" "}
+          : "This domain was not found in the connected account. If it is already there, reconnect Cloudflare and check the account and permissions you approved."}{" "}
         Cloudflare Email Sending currently requires Cloudflare DNS.
       </p>
       <ol className="domain-steps compact">
@@ -175,9 +111,22 @@ export default function DomainsPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [setup, setSetup] = useState(false);
+  const [search, setSearch] = useSearchParams();
+  const oauthResult = search.get("cloudflare");
+  const oauthMessages = {
+    connected:
+      "Cloudflare is connected. Add a domain to configure Email Sending.",
+    denied: "Cloudflare access was declined. You can connect again when ready.",
+    invalid_state:
+      "This connection link expired or belongs to another login. Start a new connection.",
+    failed:
+      "Cloudflare could not be connected. Select the account that runs Mailcheap and approve Zone Read, Email Sending Write, and refresh access. Then try again.",
+  };
   const [refreshing, setRefreshing] = useState(false);
   const domains = resource.data?.domains || [];
+  const oauthMessage = Object.hasOwn(oauthMessages, oauthResult)
+    ? oauthMessages[oauthResult]
+    : null;
   const configure = async () => {
     setBusy(true);
     setError("");
@@ -217,27 +166,35 @@ export default function DomainsPage() {
           Refresh
         </Button>
       </Heading>
+      {oauthMessage && (
+        <div
+          className={`notice ${oauthResult === "connected" ? "" : "error"}`}
+          role="status"
+        >
+          <p>{oauthMessage}</p>
+          <Button
+            variant="ghost"
+            onClick={() =>
+              setSearch(
+                (params) => {
+                  params.delete("cloudflare");
+                  return params;
+                },
+                { replace: true },
+              )
+            }
+          >
+            Dismiss
+          </Button>
+        </div>
+      )}
+      <CloudflareConnection />
       {resource.loading ? (
         <Loading />
       ) : resource.error ? (
         <ErrorState error={resource.error} retry={resource.refresh} />
       ) : (
         <>
-          {!resource.data?.configured && (
-            <section className="panel domain-connection">
-              <div>
-                <h2>Connect your Cloudflare account</h2>
-                <p>
-                  One connection lets Mailcheap find your zones and configure
-                  email records for you.
-                </p>
-              </div>
-              <Button variant="secondary" onClick={() => setSetup(true)}>
-                Set up connection
-                <ArrowRight size={16} />
-              </Button>
-            </section>
-          )}
           <div className="domain-layout">
             <section className="panel domain-add">
               <h2>Add a sending domain</h2>
@@ -290,7 +247,6 @@ export default function DomainsPage() {
                 result={result}
                 localPreview={resource.data?.local_preview}
                 onConfigure={configure}
-                onConnect={() => setSetup(true)}
                 busy={busy}
               />
             </section>
@@ -365,7 +321,6 @@ export default function DomainsPage() {
           </section>
         </>
       )}
-      <ConnectionSetup open={setup} onOpenChange={setSetup} />
     </>
   );
 }

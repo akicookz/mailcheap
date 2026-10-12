@@ -10,3 +10,11 @@ SENDING_ENABLED=false
 # Keep the token server-side. DNS writes are blocked while LOCAL_PREVIEW=true.
 # CLOUDFLARE_ACCOUNT_ID=your-32-character-account-id
 # CLOUDFLARE_API_TOKEN=your-scoped-api-token
+
+# Recommended: private Cloudflare OAuth client (server-side, client_secret_post).
+# Register both authorization_code and refresh_token grants.
+# Scopes: zone.read, email-sending.write (offline_access is added for refresh).
+# Callback: {APP_URL}/api/admin/cloudflare/callback
+# CLOUDFLARE_OAUTH_CLIENT_ID=your-client-id
+# CLOUDFLARE_OAUTH_CLIENT_SECRET=your-client-secret
+# LINK_SECRET encrypts the saved tokens. Changing it requires reconnecting.

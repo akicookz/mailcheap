@@ -3,6 +3,7 @@ import { Link, useOutletContext } from "react-router-dom";
 import { Plus, ArrowUpRight, Copy, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import CloudflareConnection from "@/components/CloudflareConnection";
 import { useResource } from "@/hooks/use-resource";
 import {
   Button,
@@ -31,6 +32,7 @@ export default function SettingsPage() {
         title="Settings"
         description="Your sending connection and integrations."
       />
+      <CloudflareConnection />
       <div className="settings-layout">
         <div>
           <section className="panel">

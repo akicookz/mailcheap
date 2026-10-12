@@ -25,6 +25,7 @@
       "binding": "DB",
       "database_name": "mailcheap",
       "database_id": "0ee7dd90-606d-44cc-b367-31eaa8b6471a",
+      "preview_database_id": "DB",
       "migrations_dir": "worker/db/drizzle",
       "remote": false,
     },

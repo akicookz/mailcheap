@@ -19,14 +19,14 @@ The MIT email renderer, Markdown and CSV helpers, autosave hook, and shadcn prim
 
 Use Bun 1.3.14 and Node 22.12 or newer. Install with `bun install --frozen-lockfile`. Copy `.dev.vars.example` to `.dev.vars`, then set the three secrets. Keep this file private.
 
-Drizzle schemas live in `worker/db/schema.ts` and `worker/db/auth.schema.ts`; generated SQL lives in `worker/db/drizzle/`. Under this workspace's instructions, applying even the local schema needs the user's explicit go. After that approval:
+Drizzle schemas live in `worker/db/*.schema.ts` and `worker/db/schema.ts`; generated SQL lives in `worker/db/drizzle/`. Under this workspace's instructions, applying even the local schema needs the user's explicit go. After that approval:
 
 ```sh
 bun run db:migrate:dev
 bun run dev
 ```
 
-Open `http://127.0.0.1:5179`. The Cloudflare Vite plugin serves both React and the Worker on that origin with local bindings. Keep `APP_URL` equal to the browser origin because authenticated writes check Origin. `LOCAL_PREVIEW=true` allows local HTTP session cookies; it must be false in production.
+Open `http://127.0.0.1:5179`. The Cloudflare Vite plugin serves both React and the Worker on that origin with local bindings. `preview_database_id: "DB"` preserves the existing local database identity when a production database ID is configured; keep `remote: false`. Keep `APP_URL` equal to the browser origin because authenticated writes check Origin. `LOCAL_PREVIEW=true` allows local HTTP session cookies; it must be false in production.
 
 Sending starts disabled. Wrangler's local Email binding simulates delivery; setting `SENDING_ENABLED=true` in local `.dev.vars` exercises that path without using a remote email binding. Do not enable remote development bindings for this workflow.
 
@@ -48,9 +48,30 @@ Cloudflare account access, quotas, and acceptance of newsletter traffic still ne
 
 ## Domain management
 
-The dashboard's **Domains** page uses Cloudflare as the source of truth. No database migration is needed. Existing sending domains appear automatically once connected.
+The dashboard's **Domains** page uses Cloudflare as the source of truth. Connect using OAuth, then existing sending domains appear automatically. The connection is restricted to the account hosting the Worker because the `EMAIL` binding sends from that account.
 
-Set `CLOUDFLARE_ACCOUNT_ID` to the account that runs the Worker. Set `CLOUDFLARE_API_TOKEN` as a Worker secret, using a token with Email Sending edit access and Zone read access scoped to that account and the zones you want to manage. The account must have Email Sending access. Never put this token in frontend environment variables or commit it. The app's **Set up connection** dialog shows the steps. Applying these settings to a deployed Worker requires deployment approval under this workspace's rules.
+### One-time OAuth setup
+
+1. Apply `0001_naive_starjammers.sql` after migration approval. It adds `cloudflare_connection` and `cloudflare_oauth_flows`; existing tables are unchanged. Use `bun run db:migrate:dev` for local D1 or `bun run db:migrate:prod` for remote D1.
+2. In Cloudflare → Manage Account → OAuth clients, create a **private** client named Mailcheap. Use response type `code`, grant types `authorization_code` and `refresh_token`, and authentication method `client_secret_post`.
+3. Add required scopes `zone.read` and `email-sending.write`. Cloudflare adds `offline_access` when refresh tokens are enabled. Do not make these permissions optional.
+4. Register the exact redirect URL `https://mailcheap-cloudflare.launchfastshop.workers.dev/api/admin/cloudflare/callback`. For local checks, register `http://127.0.0.1:5179/api/admin/cloudflare/callback` as an additional redirect URL.
+5. Keep `CLOUDFLARE_ACCOUNT_ID` equal to the Worker account. Add `CLOUDFLARE_OAUTH_CLIENT_ID` and the Worker secret `CLOUDFLARE_OAUTH_CLIENT_SECRET`. Never prefix these with `VITE_`. Adding deployed secrets creates a deployment and requires approval.
+6. Open **Domains → Connect Cloudflare**. Sign in, select the Worker account, and approve the requested access. The callback checks that the grant can access Email Sending in that account before saving it.
+
+```text
+Connect Cloudflare → approve account access → callback → encrypted D1 connection
+                                                          ↓
+                                             list zones / configure sending domains
+```
+
+The Worker exchanges authorization codes using PKCE. OAuth state expires after ten minutes, is bound to the current administrator session, and can be used once. Access and refresh tokens are encrypted with AES-GCM using a dedicated key derived from `LINK_SECRET`; they never reach the browser. Keep `LINK_SECRET` stable. Changing it requires reconnecting Cloudflare and also invalidates existing signed email links.
+
+Access tokens refresh on demand under a D1 lock. A failed or uncertain refresh asks for reconnection instead of repeatedly using a possibly rotated token. Disconnect removes locally saved tokens and requests Cloudflare revocation; if revocation fails, the UI asks you to revoke the authorization in Cloudflare. Disconnect does **not** remove DNS records or stop the independent Worker Email binding. `SENDING_ENABLED=false` remains the app's sending switch. Connecting or adding a domain does not turn it on or send an email. Configure the delivery event subscription and verify a sender before explicitly enabling it.
+
+For existing installations, `CLOUDFLARE_API_TOKEN` remains a server-side fallback **only when no OAuth client ID is configured**. Scope it to Email Sending edit and Zone read for the intended account/zones. A disconnected OAuth connection never silently falls back to that token.
+
+Cloudflare references: [OAuth client registration](https://developers.cloudflare.com/fundamentals/oauth/create-an-oauth-client/), [client API and refresh grants](https://developers.cloudflare.com/api/resources/iam/subresources/oauth_clients/methods/create/), [OAuth endpoints](https://developers.cloudflare.com/fundamentals/oauth/integrate-with-cloudflare/). Scope IDs `zone.read` and `email-sending.write` were checked against Cloudflare's live `/oauth/scopes` endpoint on 2026-10-12.
 
 ```text
 Domains → enter a domain → Check domain
@@ -59,7 +80,7 @@ Domains → enter a domain → Check domain
   Domain outside the account → Cloudflare connection instructions
 ```
 
-Email Sending currently [requires Cloudflare DNS](https://developers.cloudflare.com/email-service/get-started/send-emails/). For an externally hosted domain, first add its zone to the connected Cloudflare account, review imported website and mail records, and follow Cloudflare's nameserver and DNSSEC activation instructions. Copying SPF/DKIM records alone does not bypass that requirement. If a domain is already in the account but not found, check the token's zone scope.
+Email Sending currently [requires Cloudflare DNS](https://developers.cloudflare.com/email-service/get-started/send-emails/). For an externally hosted domain, first add its zone to the connected Cloudflare account, review imported website and mail records, and follow Cloudflare's nameserver and DNSSEC activation instructions. Copying SPF/DKIM records alone does not bypass that requirement. If a domain is already in the account but not found, check the account and permissions approved during connection.
 
 The domain detail page shows the actual records returned by Cloudflare with copy buttons. **Check DNS** compares public DNS to those records; “Published” means the expected record was found, not that delivery was tested. Cloudflare's enabled state is shown separately. Existing DMARC policies should be reviewed before changing them. A disabled domain can be re-enabled by adding the same name again.
 
@@ -79,7 +100,9 @@ Domain creation is authenticated, checks the request origin, resolves the zone w
 
 The restructured app passes lint, Worker type checking, the frontend and Worker production build, and Wrangler deployment dry run. The local health endpoint responds; unauthenticated admin requests and cross-origin login writes are rejected. The login page has been checked through browser clicks at desktop and mobile sizes.
 
-The initial schema was applied to local D1 on 2026-10-11 and to the new remote `mailcheap` D1 database on 2026-10-12, both with user approval. The Worker deployment succeeded. Live browser checks confirmed administrator sign-in, Overview data loading, the newsletter setup form, Settings, and Domains. The live database starts empty; local preview data was not copied. Queue consumption, provider events, live domain configuration, and actual email delivery remain unverified. The domain management API token and Email Sending event subscription still need configuration before live sending is enabled. No campaign or test email was sent. No tests were written, per workspace instructions.
+The initial schema was applied to local D1 on 2026-10-11 and to the new remote `mailcheap` D1 database on 2026-10-12, both with user approval. The Worker deployment succeeded. Live browser checks confirmed administrator sign-in, Overview data loading, the newsletter setup form, Settings, and Domains. The live database starts empty; local preview data was not copied. Queue consumption, provider events, live domain configuration, and actual email delivery remain unverified. The OAuth client credentials (or legacy API token) and Email Sending event subscription still need configuration before live sending is enabled. The OAuth changes have not yet been deployed. No campaign or test email was sent. No tests were written, per workspace instructions.
+
+OAuth implementation checks (2026-10-12): lint, typecheck, and build pass. One independent code review found a disconnect race and an unsafe callback-message lookup; both were fixed. Local browser clicks verified Domains, Settings, the one-time setup dialog, disconnected lookup, and an unexpected callback query value. Runtime requests verified login, unauthenticated rejection, disconnected status, and the unconfigured-client error. The Vite proxy returned an error for the cross-origin negative probe, so that check does not establish the Worker's rejection response. Live authorization-code exchange, refresh, revocation, and DNS writes remain unverified until a private OAuth client is registered and configured. The OAuth migration is generated but not applied. No deployment was performed for this change.
 
 ## API
 
