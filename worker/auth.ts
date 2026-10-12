@@ -54,6 +54,11 @@ export async function authenticated(c: Context<AppEnv>) {
   );
   return session?.version === (await version(c.env));
 }
+export async function sessionHash(c: Context<AppEnv>) {
+  const token = getCookie(c, cookie(c.env));
+  if (!token || !(await authenticated(c))) fail("Sign in to continue", 401);
+  return hash(token);
+}
 export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (!(await authenticated(c))) fail("Sign in to continue", 401);
   await next();

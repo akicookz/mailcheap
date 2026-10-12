@@ -18,6 +18,7 @@ import {
 import { admin } from "./routes/admin";
 import { campaigns } from "./routes/campaigns";
 import { domains } from "./routes/domains";
+import { cloudflare } from "./routes/cloudflare";
 import { publicRoutes, signup } from "./routes/public";
 import { consume, tick } from "./services/sending-service";
 import { consumeEvents } from "./services/event-service";
@@ -46,7 +47,12 @@ app.onError((error, c) => {
 app.use("*", async (c, next) => {
   await next();
   c.header("X-Content-Type-Options", "nosniff");
-  c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+  c.header(
+    "Referrer-Policy",
+    c.req.path === "/api/admin/cloudflare/callback"
+      ? "no-referrer"
+      : "strict-origin-when-cross-origin",
+  );
   c.header("X-Frame-Options", "DENY");
   if (c.req.path.startsWith("/api/")) c.header("Cache-Control", "no-store");
 });
@@ -63,6 +69,7 @@ app.post("/api/logout", logout);
 app.use("/api/admin/*", requireAuth, originGuard);
 app.route("/api/admin/campaigns", campaigns);
 app.route("/api/admin/domains", domains);
+app.route("/api/admin/cloudflare", cloudflare);
 app.route("/api/admin", admin);
 app.use("/api/v1/*", async (c, next) => {
   const token = c.req.header("authorization")?.replace(/^Bearer /, "") || "";

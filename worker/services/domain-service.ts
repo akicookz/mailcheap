@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Bindings } from "../types";
 import { fail } from "../lib/http";
 import { local } from "../lib/config";
+import { connectionStatus, cloudflareAccessToken } from "./cloudflare-oauth";
 
 export const domainName = z
   .string()
@@ -38,36 +39,19 @@ const envelope = z.object({
   result_info: z.object({ total_pages: z.number().optional() }).optional(),
 });
 
-export function domainConnection(env: Bindings) {
-  return {
-    configured: !!(env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_API_TOKEN),
-    local_preview: local(env),
-  };
-}
-
-function connection(env: Bindings) {
-  if (!domainConnection(env).configured)
-    fail("Connect your Cloudflare account before configuring domains.", 503);
-  if (!identifier.safeParse(env.CLOUDFLARE_ACCOUNT_ID).success)
-    fail(
-      "CLOUDFLARE_ACCOUNT_ID must be your 32-character Cloudflare account ID.",
-      503,
-    );
-}
-
 async function cloudflare<T>(
   env: Bindings,
   path: string,
   schema: z.ZodType<T>,
   body?: unknown,
 ) {
-  connection(env);
+  const token = await cloudflareAccessToken(env);
   let response: Response;
   try {
     response = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
       method: body === undefined ? "GET" : "POST",
       headers: {
-        Authorization: `Bearer ${env.CLOUDFLARE_API_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -83,7 +67,7 @@ async function cloudflare<T>(
   }
   if (response.status === 401 || response.status === 403)
     fail(
-      "Cloudflare denied access. Check the API token, account, zone scope, and Email Sending access.",
+      "Cloudflare denied access. Reconnect your account and allow Zone read and Email Sending access.",
       503,
     );
   if (response.status === 429)
@@ -119,7 +103,7 @@ async function listSenders(env: Bindings, zone: z.infer<typeof zoneSchema>) {
 }
 
 export async function listDomains(env: Bindings) {
-  const config = domainConnection(env);
+  const config = await connectionStatus(env);
   if (!config.configured) return { ...config, domains: [] };
   const zones: z.infer<typeof zoneSchema>[] = [];
   for (let page = 1; ; page++) {
@@ -166,7 +150,7 @@ async function findZone(env: Bindings, name: string) {
 }
 
 export async function lookupDomain(env: Bindings, name: string) {
-  if (!domainConnection(env).configured)
+  if (!(await connectionStatus(env)).configured)
     return { name, mode: "unconnected" as const };
   const zone = await findZone(env, name);
   if (!zone) return { name, mode: "external" as const };
@@ -185,7 +169,7 @@ export async function configureDomain(env: Bindings, name: string) {
       "DNS changes are disabled in local preview. Configure domains from the deployed app.",
       403,
     );
-  connection(env);
+  await cloudflareAccessToken(env);
   const zone = await findZone(env, name);
   if (!zone)
     fail(
